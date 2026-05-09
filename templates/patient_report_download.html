@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verified Reports | Medical AI Scanner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00f2ff;
+            --secondary: #7000ff;
+            --bg: #050a14;
+            --surface: rgba(255, 255, 255, 0.05);
+            --text: #ffffff;
+            --success: #00ff88;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: radial-gradient(circle at 50% 50%, #0a1a35 0%, #050a14 100%);
+            padding-top: 100px;
+        }
+
+        .navbar {
+            position: fixed; top: 0; left: 0; width: 100%; padding: 20px 50px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(5, 10, 20, 0.85); backdrop-filter: blur(15px);
+            z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .navbar .brand { color: var(--primary); font-weight: 800; font-size: 1.5rem; text-decoration: none; }
+        .nav-links a { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.95rem; font-weight: 600; margin-left: 20px; }
+        
+        .container {
+            max-width: 900px;
+            width: 90%;
+            margin: auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-sec { text-align: center; margin-bottom: 50px; }
+        .header-sec h1 { font-size: 2.5rem; margin-bottom: 15px; background: linear-gradient(to right, #fff, var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;}
+        .header-sec p { color: rgba(255,255,255,0.6); }
+
+        .report-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .report-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 25px;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .report-card:hover { border-color: var(--primary); transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0, 242, 255, 0.1); }
+
+        .badge-verified {
+            position: absolute; top: 15px; right: 15px;
+            background: rgba(0, 255, 136, 0.1); color: var(--success);
+            padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; border: 1px solid rgba(0,255,136,0.3);
+        }
+
+        .card-type { font-size: 0.8rem; color: var(--primary); text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 10px; }
+        .card-title { font-size: 1.3rem; font-weight: 600; margin-bottom: 10px; line-height: 1.2;}
+        .card-date { font-size: 0.85rem; color: rgba(255,255,255,0.4); margin-bottom: 25px; }
+
+        .btn-download {
+            display: block; width: 100%; text-align: center;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: white; text-decoration: none; padding: 12px; border-radius: 12px;
+            font-weight: 600; transition: 0.3s;
+        }
+
+        .btn-download:hover { box-shadow: 0 0 15px rgba(0,242,255,0.5); }
+
+        .empty-state { text-align: center; padding: 60px; background: rgba(255,255,255,0.02); border-radius: 24px; border: 1px dashed rgba(255,255,255,0.2); }
+        .background-blob { position: fixed; width: 600px; height: 600px; background: linear-gradient(45deg, var(--primary), var(--secondary)); filter: blur(150px); opacity: 0.1; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 0; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="{% url 'home' %}" class="brand"><span>⚕️</span> Medical AI</a>
+        <div class="nav-links">
+            <span style="color: var(--primary); margin-right: 15px;">Welcome, {{ username }}</span>
+            <a href="{% url 'home' %}" style="color: #ff4d4d; border: 1px solid #ff4d4d; border-radius: 6px; padding: 5px 12px;">Sign Out</a>
+        </div>
+    </nav>
+
+    <div class="background-blob"></div>
+
+    <div class="container">
+        <div class="header-sec">
+            <h1>Your Verified Medical Reports</h1>
+            <p>Securely access and download your doctor-approved diagnostic reports.</p>
+        </div>
+
+        {% if scans %}
+        <div class="report-grid">
+            {% for scan in scans %}
+            <div class="report-card">
+                <div class="badge-verified">✓ APPROVED</div>
+                <div class="card-type">{{ scan.scan_type }} Scan</div>
+                <div class="card-title">{{ scan.result_label|title }}</div>
+                <div class="card-date">{{ scan.approval_timestamp|date:"d M Y, h:i A" }}</div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <a href="{{ scan.pdf_url }}" class="btn-download" style="flex: 1; padding: 10px; font-size: 0.85rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);" target="_blank">👁️ View</a>
+                    <a href="{{ scan.pdf_url }}" class="btn-download" style="flex: 2; padding: 10px; font-size: 0.85rem;" download>📥 Download PDF</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <h2 style="margin-bottom: 10px; color: rgba(255,255,255,0.7);">No Verified Reports Yet</h2>
+            <p style="color: rgba(255,255,255,0.4);">Reports will appear here once they have been reviewed and approved by a physician.</p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

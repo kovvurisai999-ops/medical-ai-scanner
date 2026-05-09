@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnostic Report | Medical AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00f2ff;
+            --secondary: #7000ff;
+            --bg: #050a14;
+            --surface: rgba(255, 255, 255, 0.05);
+            --text: #ffffff;
+            --danger: #ff4d4d;
+            --success: #00ff88;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: radial-gradient(circle at 0% 0%, #0a1a35 0%, #050a14 100%);
+        }
+
+        .dashboard {
+            max-width: 1000px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 30px;
+        }
+
+        .card {
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            border-radius: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .image-preview {
+            position: relative;
+            overflow: hidden;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary);
+            box-shadow: 0 0 15px var(--primary);
+            animation: scan 3s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { top: 0; }
+            50% { top: 100%; }
+            100% { top: 0; }
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-badge {
+            padding: 6px 16px;
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .status-scan { background: rgba(0, 242, 255, 0.2); color: var(--primary); }
+        .status-alert { background: rgba(255, 77, 77, 0.2); color: var(--danger); }
+        .status-ok { background: rgba(0, 255, 136, 0.2); color: var(--success); }
+
+        .result-item {
+            margin-bottom: 24px;
+        }
+
+        .label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .value {
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+
+        .confidence-container {
+            margin-top: 10px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .confidence-bar {
+            height: 100%;
+            background: linear-gradient(to right, var(--secondary), var(--primary));
+            transition: width 1s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+        }
+
+        .actions {
+            margin-top: 40px;
+            display: flex;
+            gap: 16px;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary { background: white; color: black; }
+        .btn-outline { border: 1px solid rgba(255, 255, 255, 0.2); color: white; }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+        }
+
+        @media (max-width: 800px) {
+            .dashboard { grid-template-columns: 1fr; }
+        }
+        /* New Assessment Styles */
+        .clinical-note {
+            margin-top: 15px;
+            padding: 15px 20px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            color: #ffcccc;
+            box-shadow: 0 4px 15px rgba(255,0,0,0.1);
+            border-left: 5px solid var(--danger);
+            background: rgba(255, 77, 77, 0.1);
+        }
+
+        .clinical-note.critical {
+            background: rgba(255, 0, 0, 0.15);
+            border-left-color: #ff0000;
+        }
+
+        .clinical-note strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .debug-scores {
+            margin-top: 25px;
+            background: rgba(0,0,0,0.4);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px dashed rgba(255,255,255,0.2);
+        }
+
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            text-align: center;
+        }
+
+        .score-val {
+            font-size: 1rem;
+            font-weight: 800;
+        }
+
+        .score-val.highlight { color: var(--primary); }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="card">
+            <h2 style="font-size: 1.2rem; margin-bottom: 30px; color: rgba(255,255,255,0.6);">SOURCE SCAN</h2>
+            <div class="image-preview">
+                <div class="scan-line"></div>
+                <img src="{{ image_url }}" alt="Uploaded scan">
+            </div>
+            <p style="margin-top: 20px; font-size: 0.8rem; color: rgba(255,255,255,0.4);">
+                Processing resolution: 224x224 RGB<br>
+                Model Pipeline: Sequential CNN v3.1
+            </p>
+        </div>
+
+        <div class="card">
+            {% if error_message %}
+                <h2 style="color: var(--danger);">
+                    Assessment Error
+                    <span class="status-badge status-alert">INVALID DATA</span>
+                </h2>
+                
+                <div style="margin-top: 30px; font-size: 1.1rem; line-height: 1.8; color: rgba(255,100,100,0.9); background: rgba(255, 77, 77, 0.1); padding: 25px; border-radius: 16px; border: 1px solid rgba(255, 77, 77, 0.3);">
+                    ⚠️ {{ error_message }}<br><br>
+                    Please ensure the file you upload accurately matches the physical scan modality you selected. 
+                    Misrouted scans can lead to wildly inaccurate medical inferences.
+                </div>
+                
+                <div class="actions">
+                    <a href="{% url 'user_dashboard' %}" class="btn btn-outline" style="border-color: var(--danger); color: var(--danger);">
+                        <span>↺</span> Try Again
+                    </a>
+                </div>
+            {% else %}
+                <h2>
+                    Assessment Result
+                    {% if result.requires_review %}
+                    <span class="status-badge status-alert">Requires Review</span>
+                    {% else %}
+                    <span class="status-badge status-ok">Stable</span>
+                    {% endif %}
+                </h2>
+
+                <div class="result-item">
+                    <span class="label">IDENTIFIED MODALITY</span>
+                    <span class="value" style="color: var(--primary);">{{ result.type }}</span>
+                </div>
+
+                <div class="result-item">
+                    <span class="label">NEURAL PREDICTION</span>
+                    <span class="value">{{ result.prediction }}</span>
+                </div>
+
+                {% if result.clinical_note %}
+                <div class="clinical-note {% if 'CRITICAL' in result.clinical_note or 'suspicious' in result.clinical_note %}critical{% endif %}">
+                    <strong>
+                        {% if 'CRITICAL' in result.clinical_note %}⚠️ URGENT ALERT:{% else %}💡 Clinical Note:{% endif %}
+                    </strong> 
+                    {{ result.clinical_note }}
+                </div>
+                {% endif %}
+
+                <div class="result-item">
+                    <span class="label">ASSURANCE CONFIDENCE ({{ result.confidence|default:0 }}%)</span>
+                    <div class="confidence-container">
+                        <div class="confidence-bar" style="width: {{ result.confidence|default:0 }}%;"></div>
+                    </div>
+                </div>
+
+                <p style="margin-top: 30px; font-size: 0.9rem; line-height: 1.6; color: rgba(255,255,255,0.6);">
+                    Our AI model has analyzed the spatial features of the uploaded {{ result.type }}. 
+                    The detected visual patterns suggest a {{ result.prediction }} status with an assurance of {{ result.confidence }}%.
+                </p>
+
+                {% if result.disease_explanation %}
+                <div style="margin-top: 20px; font-size: 0.95rem; line-height: 1.6; color: rgba(255,255,255,0.85); background: rgba(0, 242, 255, 0.05); padding: 20px; border-radius: 12px; border-left: 4px solid var(--primary);">
+                    <strong style="color: var(--primary); display: block; margin-bottom: 8px;">📚 Etiology & Definition:</strong>
+                    {{ result.disease_explanation }}
+                </div>
+                {% endif %}
+
+                {% if result.boxed_url %}
+                <div class="result-item" style="flex-direction: column; align-items: flex-start; margin-top: 25px;">
+                    <span class="label" style="margin-bottom: 12px; color: var(--secondary);">SUSPICIOUS REGION TRACKING</span>
+                    <div style="position: relative; width: 100%; max-width: 400px;">
+                        <img src="{{ result.boxed_url }}" alt="Highlighted Region" style="width: 100%; border-radius: 12px; border: 2px solid var(--danger);">
+                        <div id="verified-stamp" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-15deg); border: 4px solid #00ff00; color: #00ff00; padding: 10px 20px; font-weight: 900; font-size: 1.5rem; text-transform: uppercase; letter-spacing: 5px; background: rgba(0,0,0,0.7); pointer-events: none;">Verified</div>
+                    </div>
+                </div>
+
+                <div class="debug-scores" style="border-style: solid; border-color: var(--secondary); background: rgba(0, 242, 255, 0.05);">
+                    <h4 style="font-size: 0.8rem; color: var(--secondary); margin-bottom: 15px; text-transform: uppercase;">📏 Clinical Metrics (Calculated ROI)</h4>
+                    <div class="score-grid" style="grid-template-columns: repeat(3, 1fr);">
+                        <div><span class="label">WIDTH</span><div class="score-val">{{ result.measurements.width_mm }} mm</div></div>
+                        <div><span class="label">HEIGHT</span><div class="score-val">{{ result.measurements.height_mm }} mm</div></div>
+                        <div><span class="label">AREA</span><div class="score-val">{{ result.measurements.area_mm2 }} mm²</div></div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if result.medications %}
+                <div class="medications-block" style="margin-top: 30px; background: rgba(0,0,0,0.3); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+                    <h3 style="font-size: 1.2rem; margin-bottom: 15px; color: var(--primary);">💊 Treatment & Protocol</h3>
+                    <ul style="list-style: none; padding: 0;">
+                        {% for med in result.medications %}
+                        <li style="margin-bottom: 15px; border-left: 3px solid var(--secondary); padding-left: 15px;">
+                            <strong style="color: white; font-size: 1.05rem;">{{ med.medicine }}</strong><br>
+                            <span style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">Dosage: {{ med.dosage }}</span><br>
+                            <span style="color: rgba(255,255,255,0.5); font-size: 0.85rem;">Timing: {{ med.timing }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <div id="approval-section" style="margin-top: 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 30px;">
+                    <p id="pre-submit-txt" style="font-size: 0.9rem; color: rgba(255,255,255,0.7); margin-bottom: 20px;">
+                        This assessment is AI-generated and needs to be submitted to your doctor for official validation.
+                    </p>
+                    
+                    <button id="btn-submit-doctor" onclick="submitToDoctor()" style="display: block; background: linear-gradient(45deg, var(--primary), var(--secondary)); border: none; color: white; width: 100%; border-radius: 12px; font-weight: 800; font-size: 1.1rem; padding: 18px; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 10px 20px -5px rgba(0, 242, 255, 0.4);">
+                        📤 Submit Report to Doctor
+                    </button>
+
+                    <div id="success-message" style="display: none; margin-top: 20px; text-align: center; background: rgba(0, 255, 136, 0.05); border: 1px solid rgba(0, 255, 136, 0.2); padding: 20px; border-radius: 12px;">
+                        <div style="color: #00ff88; font-size: 1.3rem; font-weight: 800; margin-bottom: 10px;">
+                            ✅ Successfully Submitted!
+                        </div>
+                        <p style="color: rgba(255,255,255,0.9); font-size: 1rem; margin-bottom: 20px; line-height: 1.5;">
+                            Please wait sometime. The doctor will check your reports and verify the diagnosis.
+                        </p>
+                        <a href="{% url 'patient_report_login' %}" style="display: inline-block; padding: 10px 20px; background: rgba(0, 242, 255, 0.1); color: var(--primary); border: 1px solid var(--primary); border-radius: 8px; text-decoration: none; font-weight: 600;">
+                            Go to Report Downloads
+                        </a>
+                    </div>
+                </div>
+
+                <script>
+                    function submitToDoctor() {
+                        const btn = document.getElementById('btn-submit-doctor');
+                        const msg = document.getElementById('success-message');
+                        const txt = document.getElementById('pre-submit-txt');
+                        
+                        btn.style.opacity = '0.7';
+                        btn.style.cursor = 'not-allowed';
+                        btn.innerHTML = '⏳ Submitting securely...';
+                        
+                        setTimeout(() => {
+                            btn.style.display = 'none';
+                            txt.style.display = 'none';
+                            msg.style.display = 'block';
+                        }, 1500);
+                    }
+                </script>
+
+                <div class="actions">
+                    <a href="{% url 'user_dashboard' %}" class="btn btn-outline" style="width: 100%; justify-content: center;">
+                        <span>↺</span> Upload Another Scan
+                    </a>
+                </div>
+{% endif %}
+        </div>
+    </div>
+</body>
+</html>

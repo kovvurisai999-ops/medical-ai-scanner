@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Clinical Settings | MediAI SaaS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #030712;
+            --card: #111827;
+            --primary: #38bdf8;
+            --danger: #ef4444;
+            --success: #10b981;
+            --text: #f9fafb;
+            --text-dim: #9ca3af;
+        }
+
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; margin: 0; }
+        
+        .sidebar { width: 300px; background: var(--card); border-right: 1px solid rgba(255,255,255,0.05); padding: 40px 20px; }
+        .main { flex: 1; overflow-y: auto; padding: 60px; }
+
+        .tab-btn {
+            width: 100%; text-align: left; padding: 15px 20px; background: transparent; border: none;
+            color: var(--text-dim); cursor: pointer; border-radius: 12px; font-weight: 600; margin-bottom: 5px; transition: 0.2s;
+        }
+        .tab-btn.active { background: rgba(56, 189, 248, 0.1); color: var(--primary); }
+        .tab-btn:hover:not(.active) { background: rgba(255,255,255,0.02); }
+
+        .form-section { display: none; max-width: 800px; }
+        .form-section.active { display: block; animation: fadeIn 0.3s; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .input-group { margin-bottom: 25px; }
+        .input-group label { display: block; color: var(--text-dim); margin-bottom: 8px; font-size: 0.9rem; }
+        input, select, textarea {
+            width: 100%; background: #1f2937; border: 1px solid rgba(255,255,255,0.1);
+            padding: 12px 15px; border-radius: 10px; color: white; font-size: 1rem;
+        }
+        
+        .toggle-group { display: flex; align-items: center; justify-content: space-between; padding: 15px; background: rgba(255,255,255,0.02); border-radius: 12px; margin-bottom: 15px; }
+        .toggle-group label { margin-bottom: 0; cursor: pointer; }
+        input[type="checkbox"] { width: auto; }
+
+        .save-bar { margin-top: 50px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 30px; }
+        .btn-save { background: var(--primary); color: #000; padding: 15px 40px; border-radius: 12px; border: none; font-weight: 800; cursor: pointer; transition: 0.3s; }
+        .btn-save:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(56, 189, 248, 0.3); }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <h2 style="color: var(--primary); margin-bottom: 40px;">Clinical Suite</h2>
+        <button class="tab-btn active" onclick="showTab('profile')">Profile & Branding</button>
+        <button class="tab-btn" onclick="showTab('availability')">Availability</button>
+        <button class="tab-btn" onclick="showTab('ai-rules')">AI & Review Rules</button>
+        <button class="tab-btn" onclick="showTab('patient-mgmt')">Patient Management</button>
+        <button class="tab-btn" onclick="showTab('security')">Privacy & Security</button>
+        <button class="tab-btn" onclick="showTab('appearance')">Appearance</button>
+        <button class="tab-btn" onclick="showTab('billing')">Billing & Earnings</button>
+        
+        <a href="{% url 'doctor_dashboard' %}" style="display: block; margin-top: 50px; color: var(--text-dim); text-decoration: none;">← Back to Reviews</a>
+    </aside>
+
+    <main class="main">
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- 1. Profile -->
+            <div id="profile" class="form-section active">
+                <h1>Professional Profile</h1>
+                <p style="color: var(--text-dim); margin-bottom: 40px;">Configure your medical identity and signatures for automated reporting.</p>
+                
+                <div class="grid-2">
+                    <div class="input-group">
+                        <label>Specialization</label>
+                        <input type="text" name="specialization" value="{{ settings.specialization }}">
+                    </div>
+                    <div class="input-group">
+                        <label>Qualification</label>
+                        <input type="text" name="qualification" value="{{ settings.qualification }}">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Registration Number</label>
+                    <input type="text" name="registration_number" value="{{ settings.registration_number }}">
+                </div>
+                <div class="grid-2">
+                    <div class="input-group">
+                        <label>Digital Signature</label>
+                        <input type="file" name="signature">
+                    </div>
+                    <div class="input-group">
+                        <label>Hospital Seal</label>
+                        <input type="file" name="seal">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Availability -->
+            <div id="availability" class="form-section">
+                <h1>Service Availability</h1>
+                <div class="toggle-group">
+                    <label>Internal Status (Online)</label>
+                    <input type="checkbox" name="is_online" {% if settings.is_online %}checked{% endif %}>
+                </div>
+                <div class="toggle-group">
+                    <label>Emergency Cases Available</label>
+                    <input type="checkbox" name="emergency_active" {% if settings.emergency_active %}checked{% endif %}>
+                </div>
+                <div class="toggle-group">
+                    <label>Vacation Mode</label>
+                    <input type="checkbox" name="vacation_mode" {% if settings.vacation_mode %}checked{% endif %}>
+                </div>
+                <div class="input-group">
+                    <label>Consultation Hours</label>
+                    <input type="text" name="consultation_hours" value="{{ settings.consultation_hours }}">
+                </div>
+            </div>
+
+            <!-- 3. AI Rules -->
+            <div id="ai-rules" class="form-section">
+                <h1>AI Diagnostic Workflow</h1>
+                <div class="input-group">
+                    <label>Confidence Threshold (%)</label>
+                    <input type="number" name="confidence_threshold" value="{{ settings.confidence_threshold }}">
+                </div>
+                <div class="toggle-group">
+                    <label>Auto Approve Low-risk Cases</label>
+                    <input type="checkbox" name="auto_approve" {% if settings.auto_approve_low_risk %}checked{% endif %}>
+                </div>
+                <div class="toggle-group">
+                    <label>Show Heatmaps</label>
+                    <input type="checkbox" name="show_heatmap" {% if settings.show_heatmap %}checked{% endif %}>
+                </div>
+                <div class="toggle-group">
+                    <label>QR Verification on Reports</label>
+                    <input type="checkbox" name="qr_verification" {% if settings.qr_verification %}checked{% endif %}>
+                </div>
+            </div>
+
+            <!-- 4. Patient Mgmt -->
+            <div id="patient-mgmt" class="form-section">
+                <h1>Patient & Report Management</h1>
+                <div class="input-group">
+                    <label>Default Follow-up Days</label>
+                    <input type="number" name="follow_up_days" value="{{ settings.follow_up_days }}">
+                </div>
+                <div class="toggle-group">
+                    <label>Auto Archive Old Reports (>30 days)</label>
+                    <input type="checkbox" name="auto_archive" {% if settings.auto_archive %}checked{% endif %}>
+                </div>
+                <div class="toggle-group">
+                    <label>Allow Patient Re-upload</label>
+                    <input type="checkbox" name="allow_reupload" {% if settings.allow_reupload %}checked{% endif %}>
+                </div>
+                <div class="toggle-group">
+                    <label>Auto-share Reports via Email</label>
+                    <input type="checkbox" name="share_email" {% if settings.share_email %}checked{% endif %}>
+                </div>
+            </div>
+
+            <!-- 5. Security -->
+            <div id="security" class="form-section">
+                <h1>Privacy & Security</h1>
+                <div class="toggle-group">
+                    <label>Enable 2FA Login</label>
+                    <input type="checkbox" name="2fa" {% if settings.two_factor_auth %}checked{% endif %}>
+                </div>
+                <div class="input-group">
+                    <label>Session Timeout (Minutes)</label>
+                    <input type="number" name="session_timeout" value="{{ settings.session_timeout }}">
+                </div>
+                <div class="toggle-group">
+                    <label>AES-256 Data Encryption</label>
+                    <input type="checkbox" name="encryption" {% if settings.data_encryption %}checked{% endif %}>
+                </div>
+                <div class="input-group">
+                    <label>New Password (Leave blank to keep current)</label>
+                    <input type="password" name="new_password">
+                </div>
+            </div>
+
+            <!-- 6. Appearance -->
+            <div id="appearance" class="form-section">
+                <h1>Interface Appearance</h1>
+                <div class="toggle-group">
+                    <label>Dark Mode Interface</label>
+                    <input type="checkbox" name="dark_mode" {% if settings.dark_mode %}checked{% endif %}>
+                </div>
+                <div class="input-group">
+                    <label>Accent Color Picker</label>
+                    <input type="color" name="accent_color" value="{{ settings.accent_color }}" style="height: 50px;">
+                </div>
+                <div class="input-group">
+                    <label>System Font Size</label>
+                    <select name="font_size">
+                        <option value="Small" {% if settings.font_size == 'Small' %}selected{% endif %}>Small (12px)</option>
+                        <option value="Normal" {% if settings.font_size == 'Normal' %}selected{% endif %}>Normal (14px)</option>
+                        <option value="Large" {% if settings.font_size == 'Large' %}selected{% endif %}>Large (16px)</option>
+                    </select>
+                </div>
+                <div class="toggle-group">
+                    <label>Compact Grid Layout</label>
+                    <input type="checkbox" name="compact_view" {% if settings.compact_view %}checked{% endif %}>
+                </div>
+            </div>
+
+            <!-- 7. Billing -->
+            <div id="billing" class="form-section">
+                <h1>Billing & Earnings</h1>
+                <div class="input-group">
+                    <label>Consultation Charge (₹)</label>
+                    <input type="number" step="0.01" name="consultation_charge" value="{{ settings.consultation_charge }}">
+                </div>
+                <div class="input-group">
+                    <label>Payout Method</label>
+                    <input type="text" name="payout_method" value="{{ settings.payout_method }}" placeholder="Bank Acc / UPI">
+                </div>
+                <div style="background: rgba(16, 185, 129, 0.1); padding: 25px; border-radius: 16px; border: 1px dashed var(--success);">
+                    <h4 style="margin: 0; color: var(--success);">REVENUE SUMMARY</h4>
+                    <p style="font-size: 1.5rem; font-weight: 800; margin: 10px 0;">₹{{ stats.revenue }}</p>
+                    <span style="font-size: 0.8rem; opacity: 0.7;">Lifetime Earnings from Verified Scans</span>
+                </div>
+            </div>
+
+            <div class="save-bar">
+                <button type="submit" class="btn-save">Apply Critical Changes</button>
+            </div>
+        </form>
+    </main>
+
+    <script>
+        function showTab(tabId) {
+            document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
