@@ -14,10 +14,24 @@ def load_medical_model(filename):
         return tf.keras.models.load_model(path)
     return None
 
-type_model = load_medical_model("image_type_model.h5")
-brain_model = load_medical_model("brain_model.h5")
-bone_model = load_medical_model("bone_model.h5")
-chest_model = load_medical_model("chest_model.h5")
+# Lazy loaded models
+type_model = None
+brain_model = None
+bone_model = None
+chest_model = None
+
+def get_model(model_name):
+    global type_model, brain_model, bone_model, chest_model
+    if model_name == "type" and type_model is None: type_model = load_medical_model("image_type_model.h5")
+    if model_name == "brain" and brain_model is None: brain_model = load_medical_model("brain_model.h5")
+    if model_name == "bone" and bone_model is None: bone_model = load_medical_model("bone_model.h5")
+    if model_name == "chest" and chest_model is None: chest_model = load_medical_model("chest_model.h5")
+    
+    if model_name == "type": return type_model
+    if model_name == "brain": return brain_model
+    if model_name == "bone": return bone_model
+    if model_name == "chest": return chest_model
+    return None
 
 def preprocess(img_path, target_size=224, color_mode='rgb'):
     img = tf.keras.utils.load_img(img_path, target_size=(target_size, target_size), color_mode=color_mode)
@@ -144,7 +158,8 @@ DISEASE_EXPLANATIONS = {
 
 def predict_image(img_path, filename=None, media_root=None, scan_type=None):
     img_for_type = preprocess(img_path, target_size=224)
-    type_pred = type_model.predict(img_for_type)
+    model_type = get_model("type")
+    type_pred = model_type.predict(img_for_type)
     detected_type = np.argmax(type_pred)
     
     expected_type = -1
@@ -157,7 +172,7 @@ def predict_image(img_path, filename=None, media_root=None, scan_type=None):
         return {"error": True, "message": "Invalid Modality! Upload brain MRI if Brain is selected."}
 
     if detected_type == 0: # BRAIN
-        model = brain_model
+        model = get_model("brain")
         label = ["Glioma Tumor", "Meningioma Tumor", "Normal / No Tumor", "Pituitary Tumor"]
         category = "Brain MRI"
         img = preprocess(img_path, target_size=224)
@@ -226,7 +241,7 @@ def predict_image(img_path, filename=None, media_root=None, scan_type=None):
         raw_scores = [f"{s*100:.1f}%" for s in raw_pred]
         
     elif detected_type == 1: # BONE
-        model = bone_model
+        model = get_model("bone")
         label = ["Comminuted Fracture", "Greenstick Fracture", "Healthy (No Fracture)", "Linear Fracture", "Oblique Displaced Fracture", "Oblique Fracture", "Segmental Fracture", "Spiral Fracture", "Transverse Displaced Fracture", "Transverse Fracture"]
         category = "Bone X-ray"
         img = preprocess(img_path, target_size=224)
@@ -235,7 +250,7 @@ def predict_image(img_path, filename=None, media_root=None, scan_type=None):
         confidence = float(np.max(raw_pred))
         raw_scores = []
     else: # CHEST
-        model = chest_model
+        model = get_model("chest")
         label = ["Normal / Clear Lungs", "Pneumonia Detected"]
         category = "Chest X-ray"
         img = preprocess(img_path, target_size=150)
